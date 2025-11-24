@@ -21,3 +21,7 @@
 .DS_Store
 *.swp
 .idea
+
+# 6. Claude Code 관련 파일
+.claude/
+CLAUDE.md
