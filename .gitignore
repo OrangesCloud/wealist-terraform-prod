@@ -1,0 +1,23 @@
+# .gitignore
+
+# 1. 로컬 플러그인 및 캐시 (커밋 X)
+.terraform/
+
+# 2. 상태 파일 (커밋 X - S3에 있음)
+*.tfstate
+*.tfstate.backup
+
+# 3. 변수 파일 설정 (중요!)
+*.tfvars       # 기본적으로 모든 tfvars는 무시하지만...
+*.auto.tfvars
+
+# ⭐️ 예외 처리: "설정값"만 들어있는 terraform.tfvars는 Git에 올린다!
+!terraform.tfvars
+
+# 4. Plan 파일 (커밋 X)
+*.tfplan
+*.plan
+# 5. OS/IDE 파일
+.DS_Store
+*.swp
+.idea
