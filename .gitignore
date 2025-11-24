@@ -25,3 +25,6 @@
 # 6. Claude Code 관련 파일
 .claude/
 CLAUDE.md
+
+# 7. 인프라 문서 (내부용)
+INFRASTRUCTURE.md
