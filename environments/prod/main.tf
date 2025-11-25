@@ -89,13 +89,30 @@ module "iam" {
 
 # 4. EC2
 module "ec2" {
+
   source = "../../modules/ec2"
 
   name_prefix          = var.name_prefix
   ami_id               = data.aws_ami.backend.id
-  subnet_id            = module.vpc.private_subnet_1_id
+
+  # ⭐️ [변경] 리스트 형태로 전달 (Multi-AZ)
+  private_subnet_ids   = [
+    module.vpc.private_subnet_1_id,
+    module.vpc.private_subnet_2_id,
+    module.vpc.private_subnet_3_id
+  ]
+
   security_group_ids   = [module.security.ec2_sg_id]
   iam_instance_profile = module.iam.instance_profile_name
+
+  # ⭐️ [추가] 연결할 정보들
+  user_tg_arn         = module.alb.user_tg_arn
+  board_tg_arn        = module.alb.board_tg_arn
+  monitoring_tg_arn   = module.alb.monitoring_tg_arn
+
+  db_endpoint         = module.rds.db_instance_endpoint
+  redis_endpoint      = module.elasticache.replication_group_primary_endpoint_address
+  s3_bucket_name      = "wealist-deploy-scripts" # 실제 버킷 이름
 }
 
 # 5. ECR

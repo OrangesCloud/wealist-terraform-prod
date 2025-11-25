@@ -34,7 +34,7 @@ resource "aws_db_instance" "main" {
 
   # ⭐️ Postgres 설정
   engine            = "postgres"
-  engine_version    = "16.1"       # (또는 원하시는 버전 예: 15.5)
+  engine_version    = "17.6"       # (또는 원하시는 버전 예: 15.5)
   instance_class    = var.instance_class
   allocated_storage = 20
   storage_type      = "gp3"

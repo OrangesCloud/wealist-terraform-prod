@@ -1,6 +1,6 @@
 # 1. ALB 본체
 resource "aws_lb" "main" {
-  name               = "wealist-dev-alb"
+  name               = "${var.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = var.security_group_ids
@@ -9,7 +9,7 @@ resource "aws_lb" "main" {
   enable_deletion_protection = false
 
   tags = {
-    Name = "wealist-dev-alb"
+    Name = "${var.name_prefix}-alb"
   }
 }
 
@@ -17,7 +17,7 @@ resource "aws_lb" "main" {
 
 # (1) User Service (8080)
 resource "aws_lb_target_group" "user_tg" {
-  name     = "wealist-dev-user-tg"
+  name     = "${var.name_prefix}-tg"
   port     = 8080
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -35,13 +35,13 @@ resource "aws_lb_target_group" "user_tg" {
     port                = "8080"
   }
   tags = {
-    Name = "wealist-dev-user-tg"
+    Name = "${var.name_prefix}user-tg"
   }
 }
 
 # (2) Board Service (8000)
 resource "aws_lb_target_group" "board_tg" {
-  name     = "wealist-dev-board-tg"
+  name     = "${var.name_prefix}-board-tg"
   port     = 8000
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -57,13 +57,13 @@ resource "aws_lb_target_group" "board_tg" {
     port                = "traffic-port"
   }
   tags = {
-    Name = "wealist-dev-board-tg"
+    Name = "${var.name_prefix}-board-tg"
   }
 }
 
 # (3) Monitoring (3001)
 resource "aws_lb_target_group" "monitoring_tg" {
-  name     = "wealist-dev-monitoring"
+  name     = "${var.name_prefix}-monitoring"
   port     = 3001
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -79,14 +79,14 @@ resource "aws_lb_target_group" "monitoring_tg" {
     matcher             = "200"
   }
   tags = {
-    Name = "wealist-dev-monitoring"
+    Name = "${var.name_prefix}-monitoring"
   }
 }
 
 # (4) Targets (9090)
 # (삭제예정)
 resource "aws_lb_target_group" "targets_tg" {
-  name     = "wealist-dev-targets"
+  name     = "${var.name_prefix}-targets"
   port     = 9090
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -102,7 +102,7 @@ resource "aws_lb_target_group" "targets_tg" {
     matcher             = "200"
   }
   tags = {
-    Name = "wealist-dev-targets"
+    Name = "${var.name_prefix}-targets"
   }
 }
 
@@ -266,30 +266,4 @@ resource "aws_lb_listener_rule" "https_targets" {
       values = ["/*"]
     }
   }
-}
-
-# --- TG Attachments (EC2 연결) ---
-
-resource "aws_lb_target_group_attachment" "user" {
-  target_group_arn = aws_lb_target_group.user_tg.arn
-  target_id        = var.target_id
-  port             = 8080
-}
-
-resource "aws_lb_target_group_attachment" "board" {
-  target_group_arn = aws_lb_target_group.board_tg.arn
-  target_id        = var.target_id
-  port             = 8000
-}
-
-resource "aws_lb_target_group_attachment" "monitoring" {
-  target_group_arn = aws_lb_target_group.monitoring_tg.arn
-  target_id        = var.target_id
-  port             = 3001
-}
-
-resource "aws_lb_target_group_attachment" "targets" {
-  target_group_arn = aws_lb_target_group.targets_tg.arn
-  target_id        = var.target_id
-  port             = 9090
 }
