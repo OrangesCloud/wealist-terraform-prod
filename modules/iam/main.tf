@@ -160,3 +160,40 @@ resource "aws_iam_role_policy" "s3_access" {
     ]
   })
 }
+
+# =============================================================================
+# [C] CodeDeploy Service Role (배포 오케스트레이션용)
+# =============================================================================
+
+# CodeDeploy Service Role
+# CodeDeploy 서비스가 Auto Scaling Group, Load Balancer, EC2를 제어하기 위한 Role
+resource "aws_iam_role" "codedeploy_service_role" {
+  name        = "${var.name_prefix}-codedeploy-role"
+  description = "Service role for CodeDeploy to manage Auto Scaling Groups and Load Balancers"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codedeploy.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name      = "${var.name_prefix}-codedeploy-role"
+    ManagedBy = "terraform"
+    Project   = "wealist"
+  }
+}
+
+# AWS 관리형 정책 연결: AWSCodeDeployRole
+# ASG, ELB, EC2 제어 권한 포함
+resource "aws_iam_role_policy_attachment" "codedeploy_service" {
+  role       = aws_iam_role.codedeploy_service_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRole"
+}
