@@ -17,22 +17,22 @@
 
 ## 📦 관리되는 리소스 (Managed Resources)
 
-| 카테고리 | 리소스 이름 (Logical) | 수량 | 상세 스펙 / 설정 | 비고 |
-| :--- | :--- | :---: | :--- | :--- |
-| **Network** | **VPC** | **1** | `10.1.0.0/16` | Dev와 격리됨 |
-| | **Subnets** | **6** | Public 3개 + Private 3개 | 3개 AZ(a, c, d)에 분산 |
-| | **NAT Gateway** | **1** | AZ-a에 배치 | 모든 Private Subnet이 공유 |
-| | **Internet Gateway** | **1** | - | Public Subnet용 |
-| **Compute** | **Backend ASG** | **1 그룹** | `t3.medium` (인스턴스 **2~6대**) | 트래픽에 따라 자동 조절 |
-| | **Monitoring ASG** | **1 그룹** | `t3.small` (인스턴스 **1대**) | 장애 시 자동 복구 (Self-Healing) |
-| | **IAM Role** | **1** | `wealist-prod-ec2-role` | EC2용 권한 |
-| **Database** | **RDS (PostgreSQL)** | **1** | `db.t3.micro` / 20GB | Multi-AZ: **OFF** (단일 인스턴스) |
-| **Cache** | **ElastiCache (Redis)** | **1** | `cache.t3.micro` | 노드: **1개** |
-| **Load Balancer** | **ALB** | **1** | Application Load Balancer | |
-| | **Listeners** | **2** | HTTP(80), HTTPS(443) | |
+| 카테고리 | 리소스 이름 (Logical) | 수량 | 상세 스펙 / 설정                       | 비고 |
+| :--- | :--- | :---: |:---------------------------------| :--- |
+| **Network** | **VPC** | **1** | `10.1.0.0/16`                    | Dev와 격리됨 |
+| | **Subnets** | **6** | Public 3개 + Private 3개           | 3개 AZ(a, c, d)에 분산 |
+| | **NAT Gateway** | **1** | AZ-a에 배치                         | 모든 Private Subnet이 공유 |
+| | **Internet Gateway** | **1** | -                                | Public Subnet용 |
+| **Compute** | **Backend ASG** | **1 그룹** | `t3.small` (인스턴스 **2~6대**)       | 트래픽에 따라 자동 조절 |
+| | **Monitoring ASG** | **1 그룹** | `t3.small` (인스턴스 **1대**)         | 장애 시 자동 복구 (Self-Healing) |
+| | **IAM Role** | **1** | `wealist-prod-ec2-role`          | EC2용 권한 |
+| **Database** | **RDS (PostgreSQL)** | **1** | `db.t3.micro` / 20GB             | Multi-AZ: **OFF** (단일 인스턴스) |
+| **Cache** | **ElastiCache (Redis)** | **1** | `cache.t3.micro`                 | 노드: **1개** |
+| **Load Balancer** | **ALB** | **1** | Application Load Balancer        | |
+| | **Listeners** | **2** | HTTP(80), HTTPS(443)             | |
 | | **Target Groups** | **4** | User, Board, Monitoring, Targets | |
-| **Security** | **Security Groups** | **4** | ALB, EC2, RDS, Redis용 | |
-| **Container** | **ECR Repository** | **2** | `board-service`, `user-service` | |
+| **Security** | **Security Groups** | **4** | ALB, EC2, RDS, Redis용            | |
+| **Container** | **ECR Repository** | **2** | `board-service`, `user-service`  | |
 
 > **참고:** Frontend(S3, CloudFront) 및 Route53(DNS) 리소스는 기존 운영 환경과의 충돌 방지를 위해 이 Terraform 프로젝트에서 제외되었습니다. (수동 또는 별도 관리)
 
