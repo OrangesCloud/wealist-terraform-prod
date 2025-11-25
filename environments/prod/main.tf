@@ -128,7 +128,6 @@ module "alb" {
   vpc_id             = module.vpc.vpc_id
   subnet_ids         = module.vpc.public_subnet_ids
   security_group_ids = [module.security.alb_sg_id]
-  target_id          = module.ec2.instance_id
   alb_cert_arn       = data.aws_acm_certificate.alb.arn
 }
 
