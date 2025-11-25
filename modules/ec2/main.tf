@@ -8,7 +8,7 @@ data "aws_caller_identity" "current" {}
 resource "aws_launch_template" "backend" {
   name_prefix   = "${var.name_prefix}-backend-template"
   image_id      = var.ami_id
-  instance_type = "t3.medium"
+  instance_type = "t3.small"
 
   iam_instance_profile {
     name = var.iam_instance_profile
