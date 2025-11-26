@@ -21,24 +21,15 @@ data "aws_acm_certificate" "alb" {
   statuses = ["ISSUED"]
 }
 
-# 2. DB 슈퍼유저 (SSM Parameter Store)
-# 🚨 'db_username' 대신 'db_superuser' 키를 사용합니다.
-data "aws_ssm_parameter" "db_superuser" {
-  name = "/wealist/prod/db/postgres_superuser"
+# 2. RDS 엔드포인트 (SSM Parameter Store에서 조회)
+# RDS를 수동으로 생성한 후 SSM에 저장된 엔드포인트를 조회합니다.
+data "aws_ssm_parameter" "db_endpoint" {
+  name = "/wealist/prod/db/endpoint"
+
+  # RDS를 아직 생성하지 않았을 경우를 대비한 처리는 variables.tf에서 default 값으로 처리
 }
 
-# 3. DB 비밀번호
-data "aws_ssm_parameter" "db_password" {
-  name            = "/wealist/prod/db/postgres_superuser_password"
-  with_decryption = true
-}
-
-# 4. 초기 DB 이름 (선택사항, 없으면 postgres 기본 DB 사용)
-data "aws_ssm_parameter" "db_initial_name" {
-  name = "/wealist/prod/db/postgres_db"
-}
-
-# 5. AMI (최신 Amazon Linux 2)
+# 3. AMI (최신 Amazon Linux 2)
 data "aws_ami" "backend" {
   most_recent = true
   owners      = ["amazon"]
@@ -110,7 +101,9 @@ module "ec2" {
   board_tg_arn        = module.alb.board_tg_arn
   monitoring_tg_arn   = module.alb.monitoring_tg_arn
 
-  db_endpoint         = module.rds.db_instance_endpoint
+  # RDS는 수동 관리: SSM Parameter Store에서 엔드포인트 조회
+  # RDS 생성 전에는 빈 문자열이 전달되며, 생성 후 SSM에 저장하면 자동으로 조회됨
+  db_endpoint         = try(data.aws_ssm_parameter.db_endpoint.value, "")
   redis_endpoint      = module.elasticache.replication_group_primary_endpoint_address
   s3_bucket_name      = "wealist-deploy-scripts" # 실제 버킷 이름
 }
@@ -131,26 +124,19 @@ module "alb" {
   alb_cert_arn       = data.aws_acm_certificate.alb.arn
 }
 
-# 7. RDS (PostgreSQL)
-module "rds" {
-  source = "../../modules/rds"
-
-  name_prefix    = var.name_prefix
-  vpc_id         = module.vpc.vpc_id
-
-  # ⭐️ [수정됨] 이제 private_subnet_2_id를 찾을 수 있습니다.
-  subnet_ids     = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
-  ec2_sg_id      = module.security.ec2_sg_id
-
-  instance_class = "db.t3.micro"
-
-  # ⭐️ SSM에서 가져온 슈퍼유저 정보 주입
-  db_username    = data.aws_ssm_parameter.db_superuser.value
-  db_password    = data.aws_ssm_parameter.db_password.value
-  initial_db_name= data.aws_ssm_parameter.db_initial_name.value
-
-  multi_az       = var.enable_multi_az
-}
+# 7. RDS (PostgreSQL) - 수동 관리
+# RDS는 Terraform으로 관리하지 않고 AWS 콘솔에서 직접 생성/관리합니다.
+# 이유: 민감한 데이터베이스는 실수로 삭제되는 것을 방지하기 위해 수동 관리
+#
+# 수동 생성 시 참고 사항:
+# - VPC: module.vpc.vpc_id
+# - Subnets: private_subnet_1, private_subnet_2 (최소 2개 AZ)
+# - Security Group: RDS 전용 SG 생성 필요 (EC2 SG에서 5432 포트 허용)
+# - Credentials: SSM Parameter Store에 저장
+#   - /wealist/prod/db/postgres_superuser
+#   - /wealist/prod/db/postgres_superuser_password
+#   - /wealist/prod/db/postgres_db
+#   - /wealist/prod/db/endpoint (RDS 엔드포인트 저장)
 
 # 8. ElastiCache (Redis)
 module "elasticache" {

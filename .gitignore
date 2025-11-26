@@ -12,7 +12,13 @@
 *.auto.tfvars
 
 # ⭐️ 예외 처리: "설정값"만 들어있는 terraform.tfvars는 Git에 올린다!
+# 민감한 정보(DB 엔드포인트, 비밀번호 등)는 SSM Parameter Store 사용!
 !terraform.tfvars
+
+# 🚨 절대 커밋하면 안 되는 파일들 (민감 정보 포함)
+*secret*.tfvars
+*credentials*.tfvars
+*sensitive*.tfvars
 
 # 4. Plan 파일 (커밋 X)
 *.tfplan
