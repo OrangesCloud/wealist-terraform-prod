@@ -98,3 +98,36 @@ output "db_endpoint_ssm_parameter" {
   description = "SSM parameter name for RDS endpoint"
   value       = "/wealist/prod/db/endpoint"
 }
+
+# ---------------
+# CodeDeploy Outputs
+# ---------------
+output "codedeploy_user_app_name" {
+  description = "CodeDeploy application name for User service"
+  value       = module.codedeploy.user_app_name
+}
+
+output "codedeploy_board_app_name" {
+  description = "CodeDeploy application name for Board service"
+  value       = module.codedeploy.board_app_name
+}
+
+output "codedeploy_user_deployment_group_primary" {
+  description = "CodeDeploy deployment group name for User service (primary)"
+  value       = module.codedeploy.user_deployment_group_primary
+}
+
+output "codedeploy_user_deployment_group_tg" {
+  description = "CodeDeploy deployment group name for User service (target group)"
+  value       = module.codedeploy.user_deployment_group_tg
+}
+
+output "codedeploy_board_deployment_group_primary" {
+  description = "CodeDeploy deployment group name for Board service (primary)"
+  value       = module.codedeploy.board_deployment_group_primary
+}
+
+output "codedeploy_board_deployment_group_tg" {
+  description = "CodeDeploy deployment group name for Board service (target group)"
+  value       = module.codedeploy.board_deployment_group_tg
+}

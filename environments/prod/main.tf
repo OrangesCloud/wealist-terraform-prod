@@ -166,3 +166,14 @@ module "elasticache" {
   node_type = "cache.t3.micro"
   multi_az  = var.enable_multi_az
 }
+
+# 9. CodeDeploy
+module "codedeploy" {
+  source = "../../modules/codedeploy"
+
+  name_prefix                  = var.name_prefix
+  codedeploy_service_role_arn  = module.iam.codedeploy_service_role_arn
+  backend_asg_name             = module.ec2.backend_asg_name
+  user_target_group_name       = module.alb.user_tg_name
+  board_target_group_name      = module.alb.board_tg_name
+}

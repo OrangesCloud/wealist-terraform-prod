@@ -22,3 +22,13 @@ output "alb_zone_id" {
   description = "Hosted zone ID of the Application Load Balancer"
   value       = aws_lb.main.zone_id
 }
+
+output "user_tg_name" {
+  description = "Name of User service target group"
+  value       = aws_lb_target_group.user_tg.name
+}
+
+output "board_tg_name" {
+  description = "Name of Board service target group"
+  value       = aws_lb_target_group.board_tg.name
+}

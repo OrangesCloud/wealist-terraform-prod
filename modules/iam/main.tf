@@ -198,6 +198,76 @@ resource "aws_iam_role_policy_attachment" "codedeploy_service" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
+# AWS 관리형 정책 연결: AWSCodeDeployDeployerAccess
+# CodeDeploy 배포 생성 및 관리 권한
+resource "aws_iam_role_policy_attachment" "codedeploy_deployer" {
+  role       = aws_iam_role.codedeploy_service_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess"
+}
+
+# 인라인 정책: EC2 및 ELB 추가 권한 (콘솔과 동일)
+resource "aws_iam_role_policy" "codedeploy_ec2_elb" {
+  name = "added-ec2-and-elasticloadbalancing"
+  role = aws_iam_role.codedeploy_service_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = "autoscaling:*"
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "cloudwatch:PutMetricAlarm"
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeAccountAttributes",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeImages",
+          "ec2:DescribeInstanceAttribute",
+          "ec2:DescribeInstances",
+          "ec2:DescribeKeyPairs",
+          "ec2:DescribeLaunchTemplateVersions",
+          "ec2:DescribePlacementGroups",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeSpotInstanceRequests",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeVpcClassicLink",
+          "ec2:RunInstances",
+          "ec2:TerminateInstances",
+          "ec2:CreateLaunchTemplateVersion"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect   = "Allow"
+        Action   = "iam:CreateServiceLinkedRole"
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "iam:AWSServiceName" = "autoscaling.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
 # =============================================================================
 # [D] GitHub Actions OIDC Provider 및 Role (CI/CD 파이프라인용)
 # =============================================================================
@@ -230,7 +300,7 @@ resource "aws_iam_role" "github_actions" {
   name        = "${var.name_prefix}-github-actions-role"
   description = "Role for GitHub Actions CI/CD pipeline (OIDC)"
 
-  # 신뢰 정책: 특정 GitHub 리포지토리의 특정 브랜치만 허용
+  # 신뢰 정책: 특정 GitHub Organization의 모든 리포지토리 허용
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -245,9 +315,8 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # 임시: 리포지토리만 매칭 (테스트용)
-            # GitHub OIDC는 organization을 소문자로 정규화
-            "token.actions.githubusercontent.com:sub" = "repo:orangescloud/wealist-project:*"
+            # GitHub Organization 대소문자 그대로 사용 (실제 테스트 결과 OrangesCloud로 매칭됨)
+            "token.actions.githubusercontent.com:sub" = "repo:OrangesCloud/*"
           }
         }
       }
@@ -356,6 +425,8 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:application:wealist-board-app-codeDeploy",
           "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:wealist-user-app-codeDeploy/${var.name_prefix}-deploy-group",
           "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:wealist-board-app-codeDeploy/${var.name_prefix}-deploy-group",
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:wealist-user-app-codeDeploy/wealist-user-app-codeDeploy-tg",
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:wealist-board-app-codeDeploy/wealist-board-app-codeDeploy-tg",
           "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentconfig:*"
         ]
       },
