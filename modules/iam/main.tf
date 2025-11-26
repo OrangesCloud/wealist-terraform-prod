@@ -195,5 +195,5 @@ resource "aws_iam_role" "codedeploy_service_role" {
 # ASG, ELB, EC2 제어 권한 포함
 resource "aws_iam_role_policy_attachment" "codedeploy_service" {
   role       = aws_iam_role.codedeploy_service_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRole"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
