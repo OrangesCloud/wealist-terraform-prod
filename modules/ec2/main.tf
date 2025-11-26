@@ -14,6 +14,13 @@ resource "aws_launch_template" "backend" {
     name = var.iam_instance_profile
   }
 
+  # IMDSv2 필수 설정 (보안 강화)
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # IMDSv2 필수
+    http_put_response_hop_limit = 1
+  }
+
   network_interfaces {
     associate_public_ip_address = false
     security_groups             = var.security_group_ids
@@ -76,6 +83,13 @@ resource "aws_launch_template" "monitoring" {
 
   iam_instance_profile {
     name = var.iam_instance_profile
+  }
+
+  # IMDSv2 필수 설정 (보안 강화)
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"  # IMDSv2 필수
+    http_put_response_hop_limit = 1
   }
 
   network_interfaces {

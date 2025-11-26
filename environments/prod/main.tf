@@ -83,11 +83,11 @@ module "ec2" {
 
   source = "../../modules/ec2"
 
-  name_prefix          = var.name_prefix
-  ami_id               = data.aws_ami.backend.id
+  name_prefix = var.name_prefix
+  ami_id      = data.aws_ami.backend.id
 
   # ⭐️ [변경] 리스트 형태로 전달 (Multi-AZ)
-  private_subnet_ids   = [
+  private_subnet_ids = [
     module.vpc.private_subnet_1_id,
     module.vpc.private_subnet_2_id,
     module.vpc.private_subnet_3_id
@@ -97,20 +97,21 @@ module "ec2" {
   iam_instance_profile = module.iam.instance_profile_name
 
   # ⭐️ [추가] 연결할 정보들
-  user_tg_arn         = module.alb.user_tg_arn
-  board_tg_arn        = module.alb.board_tg_arn
-  monitoring_tg_arn   = module.alb.monitoring_tg_arn
+  user_tg_arn       = module.alb.user_tg_arn
+  board_tg_arn      = module.alb.board_tg_arn
+  monitoring_tg_arn = module.alb.monitoring_tg_arn
 
   # RDS는 수동 관리: SSM Parameter Store에서 엔드포인트 조회
   # RDS 생성 전에는 빈 문자열이 전달되며, 생성 후 SSM에 저장하면 자동으로 조회됨
-  db_endpoint         = try(data.aws_ssm_parameter.db_endpoint.value, "")
-  redis_endpoint      = module.elasticache.replication_group_primary_endpoint_address
-  s3_bucket_name      = "wealist-deploy-scripts" # 실제 버킷 이름
+  db_endpoint    = try(data.aws_ssm_parameter.db_endpoint.value, "")
+  redis_endpoint = module.elasticache.replication_group_primary_endpoint_address
+  s3_bucket_name = "wealist-deploy-scripts" # 실제 버킷 이름
 }
 
 # 5. ECR
 module "ecr" {
-  source = "../../modules/ecr"
+  source      = "../../modules/ecr"
+  name_prefix = var.name_prefix
 }
 
 # 6. ALB
@@ -146,9 +147,9 @@ module "elasticache" {
   vpc_id      = module.vpc.vpc_id
 
   # ⭐️ 여기도 서브넷 2개가 필요합니다.
-  subnet_ids  = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
-  ec2_sg_id   = module.security.ec2_sg_id
+  subnet_ids = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
+  ec2_sg_id  = module.security.ec2_sg_id
 
-  node_type   = "cache.t3.micro"
-  multi_az    = var.enable_multi_az
+  node_type = "cache.t3.micro"
+  multi_az  = var.enable_multi_az
 }

@@ -23,6 +23,7 @@
 # 4. Plan 파일 (커밋 X)
 *.tfplan
 *.plan
+tfplan
 # 5. OS/IDE 파일
 .DS_Store
 *.swp

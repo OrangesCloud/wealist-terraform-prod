@@ -197,3 +197,204 @@ resource "aws_iam_role_policy_attachment" "codedeploy_service" {
   role       = aws_iam_role.codedeploy_service_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
+
+# =============================================================================
+# [D] GitHub Actions OIDC Provider 및 Role (CI/CD 파이프라인용)
+# =============================================================================
+
+# 1. GitHub OIDC Provider
+# GitHub Actions가 AWS 리소스에 접근할 수 있도록 신뢰 관계를 설정합니다.
+resource "aws_iam_openid_connect_provider" "github_actions" {
+  url = "https://token.actions.githubusercontent.com"
+
+  # GitHub의 공개 Thumbprint (2023년 기준 공식 값)
+  thumbprint_list = [
+    "6938fd4d98bab03faadb97b34396831e3780aea1",
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
+  ]
+
+  # GitHub Actions에서 발급하는 토큰의 audience
+  client_id_list = ["sts.amazonaws.com"]
+
+  tags = {
+    Name      = "${var.name_prefix}-github-oidc-provider"
+    ManagedBy = "terraform"
+    Project   = "wealist"
+  }
+}
+
+# 2. GitHub Actions IAM Role
+# GitHub Actions 워크플로우가 이 역할을 Assume하여 AWS 작업을 수행합니다.
+resource "aws_iam_role" "github_actions" {
+  name        = "${var.name_prefix}-github-actions-role"
+  description = "Role for GitHub Actions CI/CD pipeline (OIDC)"
+
+  # 신뢰 정책: 특정 GitHub 리포지토리의 특정 브랜치만 허용
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.github_actions.arn
+        }
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Condition = {
+          StringEquals = {
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
+          }
+          StringLike = {
+            # GitHub Organization과 Repository, 브랜치 제한
+            # 형식: repo:ORG/REPO:ref:refs/heads/BRANCH
+            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${var.github_branch}"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.name_prefix}-github-actions-role"
+    ManagedBy   = "terraform"
+    Project     = "wealist"
+    Environment = var.name_prefix
+  }
+}
+
+# 3. GitHub Actions 권한 정책 (통합 - 중복 제거)
+resource "aws_iam_role_policy" "github_actions_policy" {
+  name = "${var.name_prefix}-github-actions-policy"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      # =========================================================================
+      # [A] SSM Parameter Store 읽기 (환경 변수, DB 자격 증명 등)
+      # =========================================================================
+      {
+        Sid    = "SSMParameterRead"
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/wealist/${var.name_prefix}/*"
+      },
+      {
+        Sid      = "KMSDecrypt"
+        Effect   = "Allow"
+        Action   = "kms:Decrypt"
+        Resource = "*"
+      },
+
+      # =========================================================================
+      # [B] ECR - 도커 이미지 Push (CI 단계)
+      # =========================================================================
+      {
+        Sid    = "ECRGetAuthToken"
+        Effect = "Allow"
+        Action = "ecr:GetAuthorizationToken"
+        # GetAuthorizationToken은 리소스 레벨 권한이 없음
+        Resource = "*"
+      },
+      {
+        Sid    = "ECRImagePush"
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:CompleteLayerUpload",
+          "ecr:InitiateLayerUpload",
+          "ecr:PutImage",
+          "ecr:UploadLayerPart",
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:DescribeRepositories",
+          "ecr:DescribeImages",
+          "ecr:ListImages"
+        ]
+        Resource = "arn:aws:ecr:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:repository/${var.name_prefix}-*"
+      },
+
+      # =========================================================================
+      # [C] S3 - CodeDeploy 아티팩트 업로드 및 애플리케이션 데이터
+      # =========================================================================
+      {
+        Sid    = "S3CodeDeployArtifacts"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:DeleteObject"
+        ]
+        Resource = [
+          "arn:aws:s3:::${var.codedeploy_s3_bucket}",
+          "arn:aws:s3:::${var.codedeploy_s3_bucket}/*",
+          "arn:aws:s3:::${var.app_data_s3_bucket}",
+          "arn:aws:s3:::${var.app_data_s3_bucket}/*"
+        ]
+      },
+
+      # =========================================================================
+      # [D] CodeDeploy - 배포 생성 및 모니터링 (CD 단계)
+      # =========================================================================
+      {
+        Sid    = "CodeDeployCreateDeployment"
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentConfig",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetApplicationRevision"
+        ]
+        Resource = [
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:application:wealist-user-app-codeDeploy",
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:application:wealist-board-app-codeDeploy",
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:wealist-user-app-codeDeploy/${var.name_prefix}-deploy-group",
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentgroup:wealist-board-app-codeDeploy/${var.name_prefix}-deploy-group",
+          "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentconfig:*"
+        ]
+      },
+      {
+        Sid    = "CodeDeployDescribe"
+        Effect = "Allow"
+        Action = [
+          "codedeploy:ListApplications",
+          "codedeploy:ListDeploymentGroups",
+          "codedeploy:GetApplication"
+        ]
+        Resource = "*"
+      },
+
+      # =========================================================================
+      # [E] EC2 및 Auto Scaling 정보 조회 (배포 상태 확인용)
+      # =========================================================================
+      {
+        Sid    = "EC2Describe"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeInstanceStatus",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeVpcEndpoints"
+        ]
+        Resource = "*"
+      },
+
+      # =========================================================================
+      # [F] CloudFront 캐시 무효화 (프론트엔드 배포 시)
+      # =========================================================================
+      {
+        Sid      = "CloudFrontInvalidation"
+        Effect   = "Allow"
+        Action   = "cloudfront:CreateInvalidation"
+        Resource = "*"
+      }
+    ]
+  })
+}

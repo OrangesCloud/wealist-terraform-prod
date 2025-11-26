@@ -17,7 +17,7 @@ resource "aws_lb" "main" {
 
 # (1) User Service (8080)
 resource "aws_lb_target_group" "user_tg" {
-  name     = "${var.name_prefix}-tg"
+  name     = "${var.name_prefix}-user-tg"
   port     = 8080
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -28,14 +28,15 @@ resource "aws_lb_target_group" "user_tg" {
   health_check {
     path                = "/api/users/actuator/health"
     healthy_threshold   = 3
-    unhealthy_threshold = 3 # (정보대로 설정)
+    unhealthy_threshold = 3
     timeout             = 5
     interval            = 20
     matcher             = "200"
     port                = "8080"
   }
+
   tags = {
-    Name = "${var.name_prefix}user-tg"
+    Name = "${var.name_prefix}-user-tg"
   }
 }
 
@@ -63,7 +64,7 @@ resource "aws_lb_target_group" "board_tg" {
 
 # (3) Monitoring (3001)
 resource "aws_lb_target_group" "monitoring_tg" {
-  name     = "${var.name_prefix}-monitoring"
+  name     = "${var.name_prefix}-monitoring-tg"
   port     = 3001
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -78,15 +79,16 @@ resource "aws_lb_target_group" "monitoring_tg" {
     interval            = 20
     matcher             = "200"
   }
+
   tags = {
-    Name = "${var.name_prefix}-monitoring"
+    Name = "${var.name_prefix}-monitoring-tg"
   }
 }
 
 # (4) Targets (9090)
 # (삭제예정)
 resource "aws_lb_target_group" "targets_tg" {
-  name     = "${var.name_prefix}-targets"
+  name     = "${var.name_prefix}-targets-tg"
   port     = 9090
   protocol = "HTTP"
   vpc_id   = var.vpc_id
@@ -94,15 +96,16 @@ resource "aws_lb_target_group" "targets_tg" {
 
   health_check {
     path                = "/targets"
-    port                ="traffic-port"
+    port                = "traffic-port"
     healthy_threshold   = 3
     unhealthy_threshold = 2
     timeout             = 5
     interval            = 30
     matcher             = "200"
   }
+
   tags = {
-    Name = "${var.name_prefix}-targets"
+    Name = "${var.name_prefix}-targets-tg"
   }
 }
 
