@@ -207,10 +207,11 @@ resource "aws_iam_role_policy_attachment" "codedeploy_service" {
 resource "aws_iam_openid_connect_provider" "github_actions" {
   url = "https://token.actions.githubusercontent.com"
 
-  # GitHub의 공개 Thumbprint (2023년 기준 공식 값)
+  # GitHub의 공개 Thumbprint (2024년 업데이트)
   thumbprint_list = [
     "6938fd4d98bab03faadb97b34396831e3780aea1",
-    "1c58a3a8518e8759bf075b76b750d4f2df264fcd"
+    "1c58a3a8518e8759bf075b76b750d4f2df264fcd",
+    "1b511abead59c6ce207077c0bf0e0043b1382612"
   ]
 
   # GitHub Actions에서 발급하는 토큰의 audience
@@ -244,9 +245,9 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # GitHub Organization과 Repository, 브랜치 제한
-            # 형식: repo:ORG/REPO:ref:refs/heads/BRANCH
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_org}/${var.github_repo}:ref:refs/heads/${var.github_branch}"
+            # 임시: 리포지토리만 매칭 (테스트용)
+            # GitHub OIDC는 organization을 소문자로 정규화
+            "token.actions.githubusercontent.com:sub" = "repo:orangescloud/wealist-project:*"
           }
         }
       }
