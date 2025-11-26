@@ -315,8 +315,11 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            # GitHub Organization 대소문자 그대로 사용 (실제 테스트 결과 OrangesCloud로 매칭됨)
-            "token.actions.githubusercontent.com:sub" = "repo:OrangesCloud/*"
+            # GitHub Organization의 모든 리포지토리와 브랜치 허용
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:OrangesCloud/*",
+              "repo:orangescloud/*"  # 소문자 버전도 추가
+            ]
           }
         }
       }
@@ -340,15 +343,16 @@ resource "aws_iam_role_policy" "github_actions_policy" {
     Version = "2012-10-17"
     Statement = [
       # =========================================================================
-      # [A] SSM Parameter Store 읽기 (환경 변수, DB 자격 증명 등)
+      # [A] SSM Parameter Store 읽기/쓰기 (환경 변수, DB 자격 증명 등)
       # =========================================================================
       {
-        Sid    = "SSMParameterRead"
+        Sid    = "SSMParameterReadWrite"
         Effect = "Allow"
         Action = [
           "ssm:GetParameter",
           "ssm:GetParameters",
-          "ssm:GetParametersByPath"
+          "ssm:GetParametersByPath",
+          "ssm:PutParameter"
         ]
         Resource = "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/wealist/${var.environment}/*"
       },
@@ -454,6 +458,17 @@ resource "aws_iam_role_policy" "github_actions_policy" {
           "ec2:DescribeSubnets",
           "ec2:DescribeRouteTables",
           "ec2:DescribeVpcEndpoints"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "AutoScalingDescribe"
+        Effect = "Allow"
+        Action = [
+          "autoscaling:DescribeAutoScalingGroups",
+          "autoscaling:DescribeAutoScalingInstances",
+          "autoscaling:DescribeScalingActivities",
+          "autoscaling:DescribeLifecycleHooks"
         ]
         Resource = "*"
       },
