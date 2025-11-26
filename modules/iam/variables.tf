@@ -3,6 +3,12 @@ variable "name_prefix" {
   type        = string
 }
 
+variable "environment" {
+  description = "Environment name for SSM paths (e.g., prod, dev)"
+  type        = string
+  default     = "prod"
+}
+
 variable "role_name" {
   description = "EC2 IAM role name"
   type        = string
@@ -15,15 +21,15 @@ variable "profile_name" {
 
 # GitHub Actions OIDC 관련 변수
 variable "github_org" {
-  description = "GitHub organization name"
+  description = "GitHub organization name (case-sensitive!)"
   type        = string
-  default     = "wealist-project"
+  default     = "orangescloud"
 }
 
 variable "github_repo" {
   description = "GitHub repository name (without org)"
   type        = string
-  default     = "*" # 모든 리포지토리 허용, 특정 리포를 지정하려면 "wealist-backend" 같은 값 사용
+  default     = "wealist-project"
 }
 
 variable "github_branch" {

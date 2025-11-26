@@ -74,6 +74,7 @@ module "security" {
 module "iam" {
   source       = "../../modules/iam"
   name_prefix  = var.name_prefix
+  environment  = "prod"  # SSM Parameter 경로용 (wealist/prod/*)
   role_name    = "${var.name_prefix}-ec2-role"
   profile_name = "${var.name_prefix}-ec2-profile"
 }
