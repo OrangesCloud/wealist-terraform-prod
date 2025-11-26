@@ -108,20 +108,6 @@ resource "aws_ssm_parameter" "board_db_name" {
   overwrite = true
 }
 
-# S3 버킷 이름 참조 (s3.tf에서 정의된 리소스의 ID 참조)
-resource "aws_ssm_parameter" "app_data_s3_bucket" {
-  name  = "/wealist/prod/s3/app_artifacts_bucket_name"
-  type  = "String"
-  value = aws_s3_bucket.app_data_bucket.id
-  overwrite = true
-}
-
-resource "aws_ssm_parameter" "cd_artifact_s3_bucket" {
-  name  = "/wealist/prod/cd/codedeploy_artifact_bucket_name"
-  type  = "String"
-  value = aws_s3_bucket.cd_artifact_bucket.id
-  overwrite = true
-}
 
 # OAuth 공개 설정
 resource "aws_ssm_parameter" "google_client_id" {

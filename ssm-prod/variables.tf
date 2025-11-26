@@ -1,7 +1,7 @@
 # variables.tf
 
 # =============================================================================
-# 1. 환경 및 일반 설정
+# 환경 및 일반 설정
 # =============================================================================
 variable "aws_region" {
   description = "AWS 리전. 모든 인프라가 배포될 리전을 지정합니다."
@@ -15,8 +15,9 @@ variable "project_name" {
   default     = "wealist-prod"
 }
 
+
 # =============================================================================
-# 2. SecureString (민감 정보 - SSM에 암호화되어 저장됨)
+#  SSM SECURESTRING VALUES (민감 정보)
 # =============================================================================
 variable "db_password" {
   description = "RDS 클러스터 마스터 사용자 비밀번호 (Postgres Exporter 접속용 포함)."
@@ -55,7 +56,7 @@ variable "board_db_password" {
 }
 
 # =============================================================================
-# 3. 인프라 Output 및 참조 값 (다른 Terraform 스택의 결과물)
+# 인프라 Output 및 참조 값 (다른 Terraform 스택의 결과물)
 # =============================================================================
 variable "rds_cluster_endpoint" {
   description = "RDS 클러스터의 엔드포인트 주소 (host)."
@@ -84,7 +85,7 @@ variable "board_service_target_group_name" {
 }
 
 # =============================================================================
-# 4. 설정 값 및 S3 버킷 이름 (String)
+# 설정 값 및 S3 버킷 이름 (String) - 변수명 수정 완료
 # =============================================================================
 variable "google_client_id" {
   description = "Google OAuth 클라이언트 ID."
@@ -115,13 +116,13 @@ variable "oauth_redirect_url_env_var" {
   default     = "https://wealist.co.kr/oauth/callback"
 }
 
-variable "app_data_s3_bucket_name_var" {
+variable "application_data_bucket_name" {
   description = "애플리케이션 데이터(이미지 등)를 저장하는 S3 버킷 이름."
   type        = string
   default     = "wealist-app-artifacts"
 }
 
-variable "cd_artifact_s3_bucket_name_var" {
+variable "codedeploy_artifact_bucket_name" {
   description = "CodeDeploy 아티팩트(ZIP 파일)를 저장하는 S3 버킷 이름."
   type        = string
   default     = "wealist-codedeploy-artifacts"
