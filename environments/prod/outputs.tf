@@ -82,8 +82,18 @@ output "redis_endpoint" {
 }
 
 # ---------------
-# Database Outputs (SSM Parameter)
+# Database Outputs
 # ---------------
+output "db_subnet_group_name" {
+  description = "DB Subnet Group name (use this when creating RDS manually)"
+  value       = module.rds.db_subnet_group_name
+}
+
+output "db_security_group_id" {
+  description = "RDS Security Group ID (use this when creating RDS manually)"
+  value       = module.rds.db_security_group_id
+}
+
 output "db_endpoint_ssm_parameter" {
   description = "SSM parameter name for RDS endpoint"
   value       = "/wealist/prod/db/endpoint"
