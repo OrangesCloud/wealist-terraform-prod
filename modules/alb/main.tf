@@ -27,10 +27,10 @@ resource "aws_lb_target_group" "user_tg" {
 
   health_check {
     path                = "/api/users/actuator/health"
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 20
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 30
     matcher             = "200"
     port                = "8080"
   }
@@ -50,10 +50,10 @@ resource "aws_lb_target_group" "board_tg" {
 
   health_check {
     path                = "/api/boards/health"
-    healthy_threshold   = 3
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 20
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 30
     matcher             = "200"
     port                = "traffic-port"
   }
@@ -73,10 +73,10 @@ resource "aws_lb_target_group" "monitoring_tg" {
   health_check {
     path                = "/api/health"
     port                = "traffic-port"
-    healthy_threshold   = 3
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 20
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 10
+    interval            = 30
     matcher             = "200"
   }
 

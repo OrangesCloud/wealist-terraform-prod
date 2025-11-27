@@ -31,14 +31,14 @@ resource "aws_codedeploy_deployment_group" "user_dg_primary" {
   app_name               = aws_codedeploy_app.user_app.name
   deployment_group_name  = "${var.name_prefix}-deploy-group"
   service_role_arn       = var.codedeploy_service_role_arn
-  deployment_config_name = "CodeDeployDefault.AllAtOnce"
+  deployment_config_name = "CodeDeployDefault.OneAtATime"
 
   # Auto Scaling Group 연결
   autoscaling_groups = [var.backend_asg_name]
 
-  # 배포 스타일: In-Place
+  # 배포 스타일: In-Place with Traffic Control
   deployment_style {
-    deployment_option = "WITHOUT_TRAFFIC_CONTROL"
+    deployment_option = "WITH_TRAFFIC_CONTROL"
     deployment_type   = "IN_PLACE"
   }
 
@@ -67,14 +67,14 @@ resource "aws_codedeploy_deployment_group" "user_dg_tg" {
   app_name               = aws_codedeploy_app.user_app.name
   deployment_group_name  = "wealist-user-app-codeDeploy-tg"
   service_role_arn       = var.codedeploy_service_role_arn
-  deployment_config_name = "CodeDeployDefault.AllAtOnce"
+  deployment_config_name = "CodeDeployDefault.OneAtATime"
 
   # Auto Scaling Group 연결
   autoscaling_groups = [var.backend_asg_name]
 
-  # 배포 스타일: In-Place
+  # 배포 스타일: In-Place with Traffic Control
   deployment_style {
-    deployment_option = "WITHOUT_TRAFFIC_CONTROL"
+    deployment_option = "WITH_TRAFFIC_CONTROL"
     deployment_type   = "IN_PLACE"
   }
 
@@ -103,14 +103,14 @@ resource "aws_codedeploy_deployment_group" "board_dg_primary" {
   app_name               = aws_codedeploy_app.board_app.name
   deployment_group_name  = "${var.name_prefix}-deploy-group"
   service_role_arn       = var.codedeploy_service_role_arn
-  deployment_config_name = "CodeDeployDefault.AllAtOnce"
+  deployment_config_name = "CodeDeployDefault.OneAtATime"
 
   # Auto Scaling Group 연결
   autoscaling_groups = [var.backend_asg_name]
 
-  # 배포 스타일: In-Place
+  # 배포 스타일: In-Place with Traffic Control
   deployment_style {
-    deployment_option = "WITHOUT_TRAFFIC_CONTROL"
+    deployment_option = "WITH_TRAFFIC_CONTROL"
     deployment_type   = "IN_PLACE"
   }
 
@@ -139,14 +139,14 @@ resource "aws_codedeploy_deployment_group" "board_dg_tg" {
   app_name               = aws_codedeploy_app.board_app.name
   deployment_group_name  = "wealist-board-app-codeDeploy-tg"
   service_role_arn       = var.codedeploy_service_role_arn
-  deployment_config_name = "CodeDeployDefault.AllAtOnce"
+  deployment_config_name = "CodeDeployDefault.OneAtATime"
 
   # Auto Scaling Group 연결
   autoscaling_groups = [var.backend_asg_name]
 
-  # 배포 스타일: In-Place
+  # 배포 스타일: In-Place with Traffic Control
   deployment_style {
-    deployment_option = "WITHOUT_TRAFFIC_CONTROL"
+    deployment_option = "WITH_TRAFFIC_CONTROL"
     deployment_type   = "IN_PLACE"
   }
 
