@@ -126,31 +126,18 @@ module "alb" {
   alb_cert_arn       = data.aws_acm_certificate.alb.arn
 }
 
-# 7. RDS (PostgreSQL) - Subnet Group & Security Group만 Terraform 관리
-# RDS 인스턴스는 Terraform으로 관리하지 않고 AWS 콘솔에서 직접 생성/관리합니다.
-# 이유: 민감한 데이터베이스는 실수로 삭제되는 것을 방지하기 위해 수동 관리
+# 7. RDS (PostgreSQL) - Terraform 관리에서 제외됨
+# RDS는 AWS 콘솔에서 직접 관리합니다.
+# DB Subnet Group과 Security Group도 수동으로 관리합니다.
 #
-# Terraform으로 생성되는 리소스:
-# - DB Subnet Group: wealist-prod-db-sb-grp
-# - Security Group: wealist-prod-rds-sg
+# module "rds" {
+#   source = "../../modules/rds"
 #
-# RDS 인스턴스 수동 생성 시 참고 사항:
-# - VPC: module.vpc.vpc_id
-# - DB Subnet Group: module.rds.db_subnet_group_name (Terraform 생성)
-# - Security Group: module.rds.db_security_group_id (Terraform 생성)
-# - Credentials: SSM Parameter Store에 저장
-#   - /wealist/prod/db/postgres_superuser
-#   - /wealist/prod/db/postgres_superuser_password
-#   - /wealist/prod/db/postgres_db
-#   - /wealist/prod/db/endpoint (RDS 엔드포인트 저장)
-module "rds" {
-  source = "../../modules/rds"
-
-  name_prefix = var.name_prefix
-  vpc_id      = module.vpc.vpc_id
-  subnet_ids  = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
-  ec2_sg_id   = module.security.ec2_sg_id
-}
+#   name_prefix = var.name_prefix
+#   vpc_id      = module.vpc.vpc_id
+#   subnet_ids  = [module.vpc.private_subnet_1_id, module.vpc.private_subnet_2_id]
+#   ec2_sg_id   = module.security.ec2_sg_id
+# }
 
 # 8. ElastiCache (Redis)
 module "elasticache" {
