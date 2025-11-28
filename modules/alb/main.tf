@@ -24,13 +24,17 @@ resource "aws_lb_target_group" "user_tg" {
   target_type = "instance"
   lambda_multi_value_headers_enabled = false
   proxy_protocol_v2 = false
+  
+  # Optimized for faster CodeDeploy BlockTraffic phase
+  # Reduces deregistration time from 300s (default) to 30s
+  deregistration_delay = 30
 
   health_check {
     path                = "/api/users/actuator/health"
     healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 10
-    interval            = 30
+    unhealthy_threshold = 2  # Reduced from 5 to 2 for faster unhealthy detection
+    timeout             = 5   # Reduced from 10 to 5 seconds
+    interval            = 10  # Reduced from 30 to 10 seconds (faster health checks)
     matcher             = "200"
     port                = "8080"
   }
@@ -47,13 +51,16 @@ resource "aws_lb_target_group" "board_tg" {
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   target_type = "instance"
+  
+  # Optimized for faster CodeDeploy BlockTraffic phase
+  deregistration_delay = 30
 
   health_check {
     path                = "/api/boards/health"
     healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 10
-    interval            = 30
+    unhealthy_threshold = 2  # Reduced from 5 to 2 for faster unhealthy detection
+    timeout             = 5   # Reduced from 10 to 5 seconds
+    interval            = 10  # Reduced from 30 to 10 seconds
     matcher             = "200"
     port                = "traffic-port"
   }
@@ -69,14 +76,17 @@ resource "aws_lb_target_group" "monitoring_tg" {
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   target_type = "instance"
+  
+  # Optimized for faster CodeDeploy BlockTraffic phase
+  deregistration_delay = 30
 
   health_check {
     path                = "/api/health"
     port                = "traffic-port"
     healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 10
-    interval            = 30
+    unhealthy_threshold = 2  # Reduced from 5 to 2 for faster unhealthy detection
+    timeout             = 5   # Reduced from 10 to 5 seconds
+    interval            = 10  # Reduced from 30 to 10 seconds
     matcher             = "200"
   }
 
@@ -93,14 +103,17 @@ resource "aws_lb_target_group" "targets_tg" {
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   target_type = "instance"
+  
+  # Optimized for faster CodeDeploy BlockTraffic phase
+  deregistration_delay = 30
 
   health_check {
     path                = "/targets"
     port                = "traffic-port"
-    healthy_threshold   = 3
+    healthy_threshold   = 2  # Changed from 3 to 2 for consistency
     unhealthy_threshold = 2
     timeout             = 5
-    interval            = 30
+    interval            = 10  # Reduced from 30 to 10 seconds
     matcher             = "200"
   }
 
