@@ -102,6 +102,8 @@ resource "aws_launch_template" "monitoring" {
   user_data = base64encode(templatefile("${path.module}/../../scripts/monitoring_user_data.sh", {
     s3_bucket_name = var.s3_bucket_name
     region         = "ap-northeast-2"
+    db_endpoint    = var.db_endpoint
+    redis_endpoint = var.redis_endpoint
   }))
 
   tag_specifications {

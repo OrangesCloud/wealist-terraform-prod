@@ -80,12 +80,45 @@ resource "aws_security_group" "ec2" {
     protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
-  # (삭제예정)
+
+  # (Inbound) TCP 8000 from Self (모니터링 서버가 백엔드 메트릭 수집용)
+  ingress {
+    from_port = 8000
+    to_port   = 8000
+    protocol  = "tcp"
+    self      = true
+  }
+
+  # (Inbound) TCP 8080 from Self (모니터링 서버가 백엔드 메트릭 수집용)
+  ingress {
+    from_port = 8080
+    to_port   = 8080
+    protocol  = "tcp"
+    self      = true
+  }
+
+  # (Inbound) TCP 9090 from ALB SG (Prometheus UI 접근)
+  ingress {
+    from_port       = 9090
+    to_port         = 9090
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  # (Inbound) TCP 9090 from Self (Prometheus 메트릭 수집)
   ingress {
     from_port = 9090
-    to_port = 9090
-    protocol = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    to_port   = 9090
+    protocol  = "tcp"
+    self      = true
+  }
+
+  # (Inbound) ICMP from Self (Ping 허용 - 네트워크 테스트용)
+  ingress {
+    from_port = -1
+    to_port   = -1
+    protocol  = "icmp"
+    self      = true
   }
 
   # (Outbound) ALL
