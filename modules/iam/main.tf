@@ -141,7 +141,8 @@ resource "aws_iam_role_policy" "s3_access" {
         Action   = "s3:ListBucket"
         Resource = [
           "arn:aws:s3:::wealist-deploy-scripts", # 배포 스크립트 버킷
-          "arn:aws:s3:::wealist-frontend"        # (필요시) 프론트엔드/업로드 버킷
+          "arn:aws:s3:::wealist-frontend",       # 프론트엔드 버킷
+          "arn:aws:s3:::wealist-app-resources"   # 이미지 업로드 버킷
         ]
       },
       {
@@ -154,7 +155,8 @@ resource "aws_iam_role_policy" "s3_access" {
         ]
         Resource = [
           "arn:aws:s3:::wealist-deploy-scripts/*",
-          "arn:aws:s3:::wealist-frontend/*"
+          "arn:aws:s3:::wealist-frontend/*",
+          "arn:aws:s3:::wealist-app-resources/*"  # 이미지 업로드 버킷
         ]
       }
     ]

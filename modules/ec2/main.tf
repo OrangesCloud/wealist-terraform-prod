@@ -18,7 +18,7 @@ resource "aws_launch_template" "backend" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"  # IMDSv2 필수
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 3           # Docker 컨테이너에서 메타데이터 접근 허용
   }
 
   network_interfaces {
@@ -89,7 +89,7 @@ resource "aws_launch_template" "monitoring" {
   metadata_options {
     http_endpoint               = "enabled"
     http_tokens                 = "required"  # IMDSv2 필수
-    http_put_response_hop_limit = 1
+    http_put_response_hop_limit = 3           # Docker 컨테이너에서 메타데이터 접근 허용
   }
 
   network_interfaces {

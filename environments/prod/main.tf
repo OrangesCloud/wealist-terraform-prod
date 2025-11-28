@@ -74,7 +74,7 @@ module "security" {
 module "iam" {
   source       = "../../modules/iam"
   name_prefix  = var.name_prefix
-  environment  = "prod"  # SSM Parameter 경로용 (wealist/prod/*)
+  environment  = "prod" # SSM Parameter 경로용 (wealist/prod/*)
   role_name    = "${var.name_prefix}-ec2-role"
   profile_name = "${var.name_prefix}-ec2-profile"
 }
@@ -158,9 +158,9 @@ module "elasticache" {
 module "codedeploy" {
   source = "../../modules/codedeploy"
 
-  name_prefix                  = var.name_prefix
-  codedeploy_service_role_arn  = module.iam.codedeploy_service_role_arn
-  backend_asg_name             = module.ec2.backend_asg_name
-  user_target_group_name       = module.alb.user_tg_name
-  board_target_group_name      = module.alb.board_tg_name
+  name_prefix                 = var.name_prefix
+  codedeploy_service_role_arn = module.iam.codedeploy_service_role_arn
+  backend_asg_name            = module.ec2.backend_asg_name
+  user_target_group_name      = module.alb.user_tg_name
+  board_target_group_name     = module.alb.board_tg_name
 }
