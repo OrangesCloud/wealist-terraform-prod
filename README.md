@@ -18,35 +18,30 @@ Internet
     │
     └─── ALB (Backend)
             │
-            ├─── Target Group: User Service (8080)
-            │         │
-            │    ┌────┴─────────────────────────┐
-            │    │  Backend ASG (2~6 instances) │
-            │    │  ┌────────┬────────┬────────┐│
-            │    │  │  AZ-a  │  AZ-c  │  AZ-d  ││
-            │    │  ├────────┼────────┼────────┤│
-            │    │  │ User   │ User   │ User   ││
-            │    │  │ Board  │ Board  │ Board  ││
-            │    │  └────────┴────────┴────────┘│
-            │    └──────────┬───────────────────┘
-            │               │
-            ├─── Target Group: Board Service (8000)
-            │               │
-            └─── Target Group: Monitoring (3001)
-                        │
-                 ┌──────┴──────┐
-                 │ Monitoring  │
-                 │ ASG (1 inst)│
-                 │             │
-                 │ Prometheus  │
-                 │ Grafana     │
-                 └─────────────┘
-
-            Data Layer:
-            ┌─────────────┬─────────────┐
-            │             │             │
-        RDS PostgreSQL  Redis      ElastiCache
-         (Multi-AZ)    Cluster      (Failover)
+            ├─── TG: User (8080) ──┐
+            │                       │
+            ├─── TG: Board (8000) ─┤
+            │                       │         ┌─────────────────┐
+            │                       │         │  Monitoring ASG │
+            └─── TG: Monitoring ───┼────────▶│  (1 instance)   │
+                                    │         │  - Prometheus   │
+                ┌───────────────────┘         │  - Grafana      │
+                │                             └─────────────────┘
+                ▼
+        ┌───────────────────────┐
+        │  Backend ASG (2~6)    │
+        │  ┌─────┬─────┬─────┐  │
+        │  │AZ-a │AZ-c │AZ-d │  │
+        │  │User │User │User │  │
+        │  │Board│Board│Board│  │
+        │  └─────┴─────┴─────┘  │
+        └───────┬───────────────┘
+                │
+        ┌───────┴────────┐
+        │                │
+        ▼                ▼
+   RDS PostgreSQL   Redis Cluster
+    (Multi-AZ)       (Failover)
 ```
 
 ### 주요 특징
