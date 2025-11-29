@@ -204,44 +204,15 @@ EC2 (Private Subnet 10.1.10.0/24)
 
 ```mermaid
 graph TB
-    subgraph "User Access"
-        USER[User Browser]
-    end
+    USER[User Browser]
+    DNS[Route53<br/>wealist.co.kr]
+    CF[CloudFront<br/>TLS 1.2+]
+    S3[S3 Bucket<br/>React SPA]
 
-    subgraph "Route53"
-        R53[Hosted Zone<br/>wealist.co.kr<br/><br/>A Record (Alias)<br/>→ CloudFront]
-    end
-
-    subgraph "CloudFront CDN (Global Edge Locations)"
-        CF[CloudFront Distribution<br/>ID: E1234567890ABC<br/><br/>Domain: wealist.co.kr<br/>SSL: ACM Certificate (us-east-1)<br/>TLS: 1.2+<br/>Caching: Managed-CachingOptimized]
-
-        CACHE[Edge Cache<br/>TTL: Default Policy]
-    end
-
-    subgraph "Origin (ap-northeast-2)"
-        S3[S3 Bucket<br/>wealist-frontend<br/><br/>Versioning: Disabled<br/>Encryption: AES-256<br/>Public Access: BLOCKED]
-
-        OAC[Origin Access Control<br/>SigV4 Signing<br/>CloudFront Only]
-    end
-
-    subgraph "S3 Bucket Policy"
-        POLICY[Allow CloudFront OAC<br/>Deny All Others]
-    end
-
-    USER -->|1. DNS Query<br/>wealist.co.kr| R53
-    R53 -->|2. Returns<br/>CloudFront IP| USER
-    USER -->|3. HTTPS Request| CF
-    CF -->|4. Cache Hit?| CACHE
-    CACHE -->|5. Cache Miss| CF
-    CF -->|6. Fetch Origin<br/>with OAC credentials| OAC
-    OAC -->|7. SigV4 Request| S3
-    S3 -->|8. Validate Policy| POLICY
-    S3 -->|9. Return Object| CF
-    CF -->|10. Cache & Return| USER
-
-    style S3 fill:#ff9900
-    style CF fill:#8b5cf6
-    style R53 fill:#00a4e4
+    USER -->|DNS Query| DNS
+    DNS -->|CloudFront IP| USER
+    USER -->|HTTPS| CF
+    CF -->|OAC| S3
 ```
 
 ### Frontend Error Handling
@@ -310,11 +281,6 @@ graph TB
     TG_BOARD --> EC2_C
     TG_BOARD --> EC2_D
     TG_MON --> MON
-
-    style ALB fill:#f90
-    style EC2_A fill:#82ca9d
-    style EC2_C fill:#82ca9d
-    style EC2_D fill:#82ca9d
 ```
 
 ### EC2 Instance 내부 구조
@@ -398,9 +364,6 @@ graph TB
     EC2 -->|Read Credentials| SSM
     EC2 -->|Port 5432| RDS_PRIMARY
     RDS_PRIMARY -.sync replication.- RDS_STANDBY
-
-    style RDS_PRIMARY fill:#527FFF
-    style RDS_STANDBY fill:#527FFF,stroke-dasharray: 5 5
 ```
 
 ### RDS Connection Flow
@@ -493,9 +456,6 @@ graph TB
 
     EC2 -->|Port 6379| REDIS_PRIMARY
     REDIS_PRIMARY -.async replication.- REDIS_REPLICA
-
-    style REDIS_PRIMARY fill:#DC382D
-    style REDIS_REPLICA fill:#DC382D,stroke-dasharray: 5 5
 ```
 
 ### Redis Connection & Failover
@@ -570,6 +530,19 @@ EC2 Application
 
 ## 7. CI/CD (CodeDeploy + ECR)
 
+**배포 프로세스:**
+1. **GitHub Actions**: 코드 빌드 및 Docker 이미지 생성
+2. **ECR**: Docker 이미지 저장 (wealist-prod-user-service, wealist-prod-board-service)
+3. **S3**: 배포 스크립트 저장 (appspec.yml, docker-compose.yml, scripts/) - **변경 시에만**
+4. **CodeDeploy**: 배포 스크립트 변경 시에만 S3에서 다운로드
+5. **EC2**: ECR에서 최신 이미지를 Pull하여 컨테이너 재시작
+
+**일반적인 배포 (코드만 변경):**
+- GitHub Actions → ECR → EC2가 이미지 Pull → 컨테이너 재시작
+
+**배포 스크립트 변경 시:**
+- GitHub Actions → ECR + S3 → CodeDeploy → EC2
+
 ```mermaid
 graph LR
     subgraph "GitHub"
@@ -579,21 +552,14 @@ graph LR
 
     subgraph "AWS"
         ECR[ECR<br/>Docker Images]
-        S3[S3<br/>Artifacts]
-        CD[CodeDeploy<br/>User & Board]
+        S3[S3<br/>배포 스크립트<br/>변경시만]
         ASG[Backend ASG<br/>3 AZs]
     end
 
     REPO -->|Push| GHA
-    GHA -->|Build & Push| ECR
-    GHA -->|Upload| S3
-    GHA -->|Trigger| CD
-    CD -->|Deploy| ASG
-    ASG -->|Pull| ECR
-
-    style GHA fill:#2088FF
-    style ECR fill:#FF9900
-    style CD fill:#82ca9d
+    GHA -->|1. Build & Push| ECR
+    GHA -.->|2. Upload if changed| S3
+    ASG -->|3. Pull Images| ECR
 ```
 
 ### CodeDeploy Deployment Flow
@@ -723,11 +689,6 @@ graph TB
     ALB_SG -->|Backend Ports| EC2_SG
     EC2_SG -->|PostgreSQL| RDS_SG
     EC2_SG -->|Redis| REDIS_SG
-
-    style ALB_SG fill:#f90
-    style EC2_SG fill:#82ca9d
-    style RDS_SG fill:#527FFF
-    style REDIS_SG fill:#DC382D
 ```
 
 ### Security Group Traffic Flow
@@ -791,10 +752,6 @@ graph LR
     EC2 -.assumes.- EC2_ROLE
     CD -.assumes.- CD_ROLE
     GHA -.assumes via OIDC.- GHA_ROLE
-
-    style EC2_ROLE fill:#82ca9d
-    style CD_ROLE fill:#f90
-    style GHA_ROLE fill:#2088FF
 ```
 
 ### IAM Policy Details
