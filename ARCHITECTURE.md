@@ -202,6 +202,8 @@ EC2 (Private Subnet 10.1.10.0/24)
                             └─→ Internet
 ```
 
+![network-simple](.docs/images/wealist-network-topology.png)
+
 ---
 
 ## 3. Frontend (S3 + CloudFront + Route53)
