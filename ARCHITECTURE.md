@@ -10,9 +10,10 @@
 - [4. Backend (EC2 + ALB + ASG)](#4-backend-ec2--alb--asg)
 - [5. Database (RDS PostgreSQL)](#5-database-rds-postgresql)
 - [6. Cache (ElastiCache Redis)](#6-cache-elasticache-redis)
-- [7. CI/CD (CodeDeploy + ECR)](#7-cicd-codedeploy--ecr)
-- [8. Security Groups 관계도](#8-security-groups-관계도)
-- [9. IAM Roles 및 권한](#9-iam-roles-및-권한)
+- [7. 모니터링 (prometheus, loki, grafana)](#7-모니터링-prometheus--grafana)
+- [8. CI/CD (CodeDeploy + ECR)](#8-cicd-codedeploy--ecr)
+- [9. Security Groups 관계도](#9-security-groups-관계도)
+- [10. IAM Roles 및 권한](#10-iam-roles-및-권한)
 
 ---
 
@@ -76,6 +77,8 @@ graph TB
     GHA -->|Trigger Deployment| CD
     CD -->|Deploy| ASG
 ```
+### 간단하게 표현한 아키텍쳐
+![wealist_prod_aws_architecture.png](.docs/images/wealist_prod_aws_architecture.png)
 
 ---
 
@@ -150,6 +153,7 @@ graph TB
 │  └─────────────────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
 
 ### 2.2 Routing Tables
 
@@ -343,28 +347,8 @@ graph TB
 
 ## 5. Database (RDS PostgreSQL)
 
-```mermaid
-graph TB
-    subgraph "Backend EC2"
-        EC2[EC2 Instances<br/>3 AZs]
-    end
+![wealist-data-layer](.docs/images/wealist-data-layer.png)
 
-    subgraph "SSM Parameter Store"
-        SSM[DB Credentials<br/>& Endpoint]
-    end
-
-    subgraph "AZ-a"
-        RDS_PRIMARY[(RDS Primary<br/>PostgreSQL 17.x<br/>db.t3.micro)]
-    end
-
-    subgraph "AZ-c"
-        RDS_STANDBY[(RDS Standby<br/>Multi-AZ)]
-    end
-
-    EC2 -->|Read Credentials| SSM
-    EC2 -->|Port 5432| RDS_PRIMARY
-    RDS_PRIMARY -.sync replication.- RDS_STANDBY
-```
 
 ### RDS Connection Flow
 
@@ -440,24 +424,6 @@ EC2 Instance Startup
 
 ## 6. Cache (ElastiCache Redis)
 
-```mermaid
-graph TB
-    subgraph "Backend EC2"
-        EC2[EC2 Instances<br/>3 AZs]
-    end
-
-    subgraph "AZ-c"
-        REDIS_PRIMARY[(Redis Primary<br/>Redis 7.0<br/>cache.t3.micro)]
-    end
-
-    subgraph "AZ-d"
-        REDIS_REPLICA[(Redis Replica<br/>Multi-AZ)]
-    end
-
-    EC2 -->|Port 6379| REDIS_PRIMARY
-    REDIS_PRIMARY -.async replication.- REDIS_REPLICA
-```
-
 ### Redis Connection & Failover
 
 ```
@@ -528,7 +494,23 @@ EC2 Application
 
 ---
 
-## 7. CI/CD (CodeDeploy + ECR)
+## 7. 모니터링 (prometheus + grafana)
+
+**모니터링 프로세스:**
+1. **ec2**: 멀티 az에 있는 ec2 에서 메트릭 전달
+2. **rds**: rds exporter 를 통해 모니터링 ec2 에 전달
+3. **elasticache**: redis exporter 를 통해 모니터링 ec2 에 전달
+4. **prometheus**: 받아온 메트릭을 처리
+5. **loki** : 멀티 az 에 있는 ec2 에서 받아온 로그 처리
+6. **Grafana**: prometheus, loki 에서 받은것을 시각화
+
+![wealist-monitoring](.docs/images/wealist-monitoring.png)
+
+
+
+---
+
+## 8. CI/CD (CodeDeploy + ECR)
 
 **배포 프로세스:**
 1. **GitHub Actions**: 코드 빌드 및 Docker 이미지 생성
@@ -674,22 +656,11 @@ Time T3: Deployment complete
 
 ---
 
-## 8. Security Groups 관계도
+## 9. Security Groups 관계도
 
-```mermaid
-graph TB
-    INTERNET[Internet<br/>0.0.0.0/0]
 
-    ALB_SG[ALB SG<br/>80, 443]
-    EC2_SG[EC2 SG<br/>8080, 8000, 3001]
-    RDS_SG[RDS SG<br/>5432]
-    REDIS_SG[Redis SG<br/>6379]
 
-    INTERNET -->|HTTP/HTTPS| ALB_SG
-    ALB_SG -->|Backend Ports| EC2_SG
-    EC2_SG -->|PostgreSQL| RDS_SG
-    EC2_SG -->|Redis| REDIS_SG
-```
+![wealist-security-layer](.docs/images/wealist-security-layer.png)**
 
 ### Security Group Traffic Flow
 
@@ -733,7 +704,7 @@ Internet (Client)
 
 ---
 
-## 9. IAM Roles 및 권한
+## 10. IAM Roles 및 권한
 
 ```mermaid
 graph LR
@@ -881,8 +852,9 @@ Permissions Policy (wealist-prod-github-actions-policy):
 4. **Backend**: EC2 + ASG + ALB + Target Groups
 5. **Database**: RDS PostgreSQL (수동 관리) + Multi-AZ 옵션
 6. **Cache**: ElastiCache Redis Cluster
-7. **CI/CD**: GitHub Actions OIDC + CodeDeploy + ECR
-8. **Security Groups**: 5개 SG 간의 트래픽 흐름
-9. **IAM Roles**: EC2, CodeDeploy, GitHub Actions 역할 및 권한
+7. **모니터링**: Monitoring(prometheus, loki, grafana)
+8. **CI/CD**: GitHub Actions OIDC + CodeDeploy + ECR
+9. **Security Groups**: 5개 SG 간의 트래픽 흐름
+10. **IAM Roles**: EC2, CodeDeploy, GitHub Actions 역할 및 권한
 
 각 섹션은 ASCII 다이어그램과 Mermaid 차트로 시각화되어 있습니다.
