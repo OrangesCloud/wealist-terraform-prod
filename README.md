@@ -280,12 +280,6 @@ terraform {
 
 ---
 
-## 📝 참고 문서
-
-- `CLAUDE.md` - Claude Code AI 가이드
-- `ARCHITECTURE.md` - 상세 아키텍처 다이어그램
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [AWS CodeDeploy](https://docs.aws.amazon.com/codedeploy/)
 - [GitHub Actions OIDC](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 
 ---
